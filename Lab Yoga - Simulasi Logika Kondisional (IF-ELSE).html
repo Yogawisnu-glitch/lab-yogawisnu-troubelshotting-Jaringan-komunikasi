@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Yoga: Simulasi Logika Kondisional (IF-ELSE)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Kustomisasi Scrollbar & Animasi Halus */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        .code-line {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-left: 4px solid transparent;
+        }
+        .code-line.active-true {
+            background-color: rgba(16, 185, 129, 0.18);
+            border-left-color: #10b981;
+        }
+        .code-line.active-false {
+            background-color: rgba(239, 68, 68, 0.12);
+            border-left-color: #ef4444;
+        }
+        .code-line.evaluating {
+            background-color: rgba(245, 158, 11, 0.25);
+            border-left-color: #f59e0b;
+            transform: translateX(4px);
+        }
+        .code-line.dimmed {
+            opacity: 0.45;
+        }
+        /* Animasi Pulse untuk Step-by-Step */
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+            50% { box-shadow: 0 0 0 8px rgba(79, 70, 229, 0); }
+        }
+        .step-highlight {
+            animation: pulseGlow 1.5s infinite;
+        }
+        /* Custom Range Slider */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #4f46e5;
+            cursor: pointer;
+            margin-top: -6px;
+            box-shadow: 0 2px 6px rgba(79, 70, 229, 0.4);
+            transition: transform 0.15s ease;
+        }
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 8px;
+            cursor: pointer;
+            background: #e2e8f0;
+            border-radius: 999px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- ==================== HEADER & NAVIGASI ==================== -->
+    <header class="bg-gradient-to-r from-indigo-900 via-brand-700 to-indigo-800 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <!-- Logo & Judul -->
+                <div class="flex items-start sm:items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-sm border border-white/20 flex items-center justify-center text-2xl shadow-inner shrink-0">
+                        <i class="fa-solid fa-code-branch text-amber-300"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">Lab Yoga</h1>
+                            <span class="px-2.5 py-0.5 text-xs font-semibold bg-amber-400/20 text-amber-200 border border-amber-300/30 rounded-full">
+                                Modul Logika Kondisional (IF-ELSE)
+                            </span>
+                        </div>
+                        <p class="text-indigo-100 text-xs sm:text-sm mt-0.5 max-w-2xl">
+                            Simulasi interaktif untuk memahami bagaimana komputer mengambil keputusan berdasarkan kondisi <code class="bg-black/25 px-1.5 py-0.5 rounded text-amber-200">TRUE</code> atau <code class="bg-black/25 px-1.5 py-0.5 rounded text-rose-200">FALSE</code> secara real-time.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigasi Mode Utama (Simulasi vs Kuis) -->
+                <nav class="flex bg-indigo-950/60 p-1.5 rounded-xl border border-indigo-400/20 self-start md:self-auto">
+                    <button id="nav-simulasi" onclick="switchMainTab('simulasi')" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-900 shadow-sm">
+                        <i class="fa-solid fa-flask"></i>
+                        <span>Lab Simulasi</span>
+                    </button>
+                    <button id="nav-kuis" onclick="switchMainTab('kuis')" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-indigo-200 hover:text-white">
+                        <i class="fa-solid fa-puzzle-piece"></i>
+                        <span>Tantangan Kuis</span>
+                        <span id="quiz-badge" class="ml-1 px-1.5 py-0.2 text-[11px] bg-emerald-500 text-white rounded-full">5</span>
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- ==================== KONTEN UTAMA: LAB SIMULASI ==================== -->
+    <main id="view-simulasi" class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        
+        <!-- 1. PEMILIHAN SKENARIO / STUDI KASUS -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-4 sm:p-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-slate-500 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group text-brand-600"></i> Pilih Skenario Studi Kasus
+                </h2>
+                <span id="scenario-tag" class="text-xs font-medium px-2.5 py-1 rounded-full bg-indigo-50 text-brand-700 border border-indigo-100 self-start sm:self-auto">
+                    Struktur: IF - ELSE IF - ELSE
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="scenario-buttons">
+                <!-- Tombol Skenario 1 -->
+                <button onclick="selectScenario(0)" id="btn-scen-0" class="scenario-card text-left p-4 rounded-xl border-2 border-brand-600 bg-brand-50/60 transition-all hover:shadow-md flex items-start gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-brand-600 text-white flex items-center justify-center text-lg shrink-0 mt-0.5">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900 text-sm sm:text-base">1. Cek Kelulusan & Predikat</div>
+                        <p class="text-xs text-slate-600 mt-1">Evaluasi nilai ujian (0-100) & persentase kehadiran menggunakan <span class="font-mono font-semibold text-brand-700">IF - ELSE IF - ELSE</span>.</p>
+                    </div>
+                </button>
+
+                <!-- Tombol Skenario 2 -->
+                <button onclick="selectScenario(1)" id="btn-scen-1" class="scenario-card text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-brand-300 transition-all hover:shadow-md flex items-start gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-lg shrink-0 mt-0.5">
+                        <i class="fa-solid fa-temperature-half"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900 text-sm sm:text-base">2. Sensor Suhu Ruangan AC</div>
+                        <p class="text-xs text-slate-600 mt-1">Kontrol otomatis mode pendingin AC berdasarkan suhu Celsius (<span class="font-mono font-semibold text-sky-700">IF - ELSE IF - ELSE</span>).</p>
+                    </div>
+                </button>
+
+                <!-- Tombol Skenario 3 -->
+                <button onclick="selectScenario(2)" id="btn-scen-2" class="scenario-card text-left p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-brand-300 transition-all hover:shadow-md flex items-start gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-lg shrink-0 mt-0.5">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-900 text-sm sm:text-base">3. Diskon Belanja & Member VIP</div>
+                        <p class="text-xs text-slate-600 mt-1">Logika bertingkat & operator <span class="font-mono font-semibold text-amber-700">AND (&&)</span> berdasarkan total belanja & status member.</p>
+                    </div>
+                </button>
+            </div>
+        </section>
+
+        <!-- GRID UTAMA: KIRI (INPUT & FLOWCHART), KANAN (KODE & OUTPUT) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- KOLOM KIRI (5 Kolom di Desktop): PANEL INPUT & EVALUASI BOOLEAN -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- 2. PANEL INPUT & KONTROL SIMULASI -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-brand-600"></i> Panel Input Variabel
+                        </h3>
+                        <button onclick="resetInputs()" class="text-xs font-medium text-slate-500 hover:text-brand-600 flex items-center gap-1 transition-colors" title="Reset nilai awal">
+                            <i class="fa-solid fa-rotate-left"></i> Reset
+                        </button>
+                    </div>
+
+                    <!-- Kontainer Input Dinamis per Skenario -->
+                    <div id="dynamic-inputs" class="space-y-5">
+                        <!-- Diisi oleh JavaScript -->
+                    </div>
+
+                    <!-- Tombol Kontrol Simulasi Step-by-Step -->
+                    <div class="mt-6 pt-4 border-t border-slate-100 flex flex-col sm:flex-row gap-2.5">
+                        <button id="btn-step-run" onclick="runStepByStep()" class="flex-1 bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-semibold py-2.5 px-4 rounded-xl shadow-sm shadow-brand-600/20 transition-all flex items-center justify-center gap-2 text-sm">
+                            <i class="fa-solid fa-play"></i>
+                            <span>Simulasi Step-by-Step</span>
+                        </button>
+                        <button id="btn-instant-run" onclick="evaluateScenario(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 px-3.5 rounded-xl transition-all flex items-center justify-center gap-1.5 text-sm" title="Langsung lihat hasil">
+                            <i class="fa-solid fa-bolt text-amber-500"></i>
+                            <span>Instan</span>
+                        </button>
+                    </div>
+                    <p id="step-status-text" class="text-xs text-center text-slate-500 mt-2.5 hidden">
+                        <i class="fa-solid fa-spinner fa-spin text-brand-600 mr-1"></i> Mengevaluasi baris demi baris...
+                    </p>
+                </div>
+
+                <!-- 3. VISUALISASI FLOWCHART / KARTU EVALUASI KONDISI LIVE -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-diagram-project text-emerald-600"></i> Alur Evaluasi Kondisi (Flowchart)
+                        </h3>
+                        <span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-600">Atas ke Bawah</span>
+                    </div>
+
+                    <!-- Diagram Alur Interaktif -->
+                    <div id="flowchart-container" class="space-y-2.5">
+                        <!-- Diisi oleh JavaScript -->
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- KOLOM KANAN (7 Kolom di Desktop): BLOK KODE & PANEL OUTPUT -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- 4. VISUALISASI BLOK KODE REAL-TIME -->
+                <div class="bg-slate-900 rounded-2xl shadow-lg border border-slate-800 overflow-hidden">
+                    <!-- Header Editor Kode -->
+                    <div class="bg-slate-950 px-4 py-3 flex items-center justify-between border-b border-slate-800">
+                        <div class="flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                            <span class="w-3 h-3 rounded-full bg-amber-400"></span>
+                            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                            <span id="code-filename" class="ml-2 text-xs font-mono text-slate-400">cek_kelulusan.js</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-[11px] font-medium">
+                            <span class="flex items-center gap-1 text-emerald-400"><span class="w-2 h-2 rounded-full bg-emerald-400"></span> TRUE (Dieksekusi)</span>
+                            <span class="flex items-center gap-1 text-rose-400"><span class="w-2 h-2 rounded-full bg-rose-400"></span> FALSE (Dilewati)</span>
+                        </div>
+                    </div>
+
+                    <!-- Baris Variabel Saat Ini (Live Memory Watch) -->
+                    <div id="memory-watch" class="bg-slate-800/70 px-4 py-2 border-b border-slate-800 flex flex-wrap items-center gap-2 text-xs font-mono">
+                        <span class="text-slate-400"><i class="fa-solid fa-memory mr-1"></i>Memori Variabel:</span>
+                        <!-- Diisi JS -->
+                    </div>
+
+                    <!-- Area Kode Program -->
+                    <div id="code-display" class="p-4 sm:p-5 overflow-x-auto text-xs sm:text-sm code-font leading-relaxed text-slate-200 space-y-1">
+                        <!-- Diisi oleh JavaScript -->
+                    </div>
+                </div>
+
+                <!-- 5. PANEL OUTPUT & PENJELASAN LOGIKA -->
+                <div id="output-panel" class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-5 transition-all">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+                        <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-brand-600"></i> Hasil Output & Analisis Logika
+                        </h3>
+                        <span id="executed-branch-badge" class="text-xs font-mono font-bold px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800">
+                            Cabang: IF pertama
+                        </span>
+                    </div>
+
+                    <!-- Kotak Hasil Visual -->
+                    <div id="output-visual-card" class="rounded-xl p-4 sm:p-5 border-2 border-emerald-200 bg-emerald-50/70 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 transition-all">
+                        <div id="output-icon" class="w-14 h-14 rounded-2xl bg-emerald-500 text-white flex items-center justify-center text-2xl shrink-0 shadow-sm">
+                            <i class="fa-solid fa-award"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs font-bold uppercase tracking-wider text-emerald-700 mb-0.5">Output Program:</div>
+                            <div id="output-result-text" class="text-lg sm:text-xl font-extrabold text-slate-900">
+                                "Lulus dengan Predikat A (Sangat Baik)"
+                            </div>
+                            <div id="output-sub-text" class="text-xs sm:text-sm text-slate-600 mt-1">
+                                Selamat! Nilai dan kehadiran memenuhi standar tertinggi.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Penjelasan Langkah Logika -->
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/70">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb text-amber-500"></i> Mengapa Cabang Ini Dipilih?
+                        </h4>
+                        <p id="logic-explanation" class="text-sm text-slate-700 leading-relaxed">
+                            <!-- Diisi oleh JavaScript -->
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== KONTEN KEDUA: MINI KUIS INTERAKTIF ==================== -->
+    <section id="view-kuis" class="hidden flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 p-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
+                <div>
+                    <h2 class="text-xl font-extrabold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-brain text-brand-600"></i> Tantangan Logika IF-ELSE
+                    </h2>
+                    <p class="text-sm text-slate-500 mt-0.5">Uji pemahamanmu dengan menebak output program atau melengkapi kondisi yang tepat!</p>
+                </div>
+                <div class="flex items-center gap-3 bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100">
+                    <div class="text-xs font-semibold text-indigo-700">Skor Kamu:</div>
+                    <div id="quiz-score" class="text-lg font-extrabold text-brand-700">0 / 5</div>
+                </div>
+            </div>
+
+            <!-- Progress Bar Kuis -->
+            <div class="w-full bg-slate-100 h-2 rounded-full mb-6 overflow-hidden">
+                <div id="quiz-progress-bar" class="bg-brand-600 h-full transition-all duration-300" style="width: 20%"></div>
+            </div>
+
+            <!-- Kontainer Soal Kuis -->
+            <div id="quiz-container" class="space-y-5">
+                <!-- Diisi oleh JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
+            <div class="flex items-center gap-2 font-medium text-slate-700">
+                <i class="fa-solid fa-code text-brand-600"></i>
+                <span>Lab Yoga — Media Pembelajaran Algoritma & Pemrograman Dasar</span>
+            </div>
+            <div>Modul Logika Kondisional (IF - ELSE IF - ELSE & Nested IF)</div>
+        </div>
+    </footer>
+
+    <!-- ==================== JAVASCRIPT LOGIC ==================== -->
+    <script>
+        // ==========================================
+        // 1. DATA & DEFINISI SKENARIO SIMULASI
+        // ==========================================
+        const scenarios = [
+            {
+                id: 0,
+                title: "Cek Kelulusan & Predikat",
+                tag: "Struktur: IF - ELSE IF - ELSE",
+                filename: "cek_kelulusan.js",
+                inputs: [
+                    { id: "nilai", label: "Nilai Ujian Akhir", type: "range", min: 0, max: 100, step: 1, default: 88, unit: " poin" },
+                    { id: "hadir", label: "Persentase Kehadiran", type: "range", min: 0, max: 100, step: 5, default: 90, unit: "%" }
+                ],
+                presets: [
+                    { label: "Siswa Teladan (92, 95%)", values: { nilai: 92, hadir: 95 } },
+                    { label: "Lulus Cukup (76, 80%)", values: { nilai: 76, hadir: 80 } },
+                    { label: "Jarang Masuk (85, 60%)", values: { nilai: 85, hadir: 60 } },
+                    { label: "Remedial (55, 85%)", values: { nilai: 55, hadir: 85 } }
+                ],
+                evaluate: function(vals) {
+                    const { nilai, hadir } = vals;
+                    
+                    // Definisi langkah evaluasi kondisi secara berurutan
+                    const conditions = [
+                        {
+                            id: "cond-0",
+                            type: "IF",
+                            expression: `hadir < 75`,
+                            evaluatedExpr: `${hadir} < 75`,
+                            result: hadir < 75,
+                            desc: "Cek syarat minimal kehadiran 75% terlebih dahulu"
+                        },
+                        {
+                            id: "cond-1",
+                            type: "ELSE IF",
+                            expression: `nilai >= 85`,
+                            evaluatedExpr: `${nilai} >= 85`,
+                            result: nilai >= 85,
+                            desc: "Jika kehadiran cukup, cek apakah nilai memenuhi predikat A (>= 85)"
+                        },
+                        {
+                            id: "cond-2",
+                            type: "ELSE IF",
+                            expression: `nilai >= 70`,
+                            evaluatedExpr: `${nilai} >= 70`,
+                            result: nilai >= 70,
+                            desc: "Jika bukan A, cek apakah nilai memenuhi predikat B (>= 70)"
+                        },
+                        {
+                            id: "cond-3",
+                            type: "ELSE",
+                            expression: `Semua kondisi di atas FALSE`,
+                            evaluatedExpr: `Nilai (${nilai}) < 70`,
+                            result: true, // Else selalu jalan jika semua atas false
+                            desc: "Blok cadangan terakhir jika nilai kurang dari 70"
+                        }
+                    ];
+
+                    // Tentukan cabang mana yang menang (pertama kali TRUE)
+                    let winningIndex = -1;
+                    for (let i = 0; i < conditions.length; i++) {
+                        if (conditions[i].result) {
+                            winningIndex = i;
+                            break;
+                        }
+                    }
+
+                    // Susun Output & Penjelasan berdasarkan winningIndex
+                    let output = {};
+                    if (winningIndex === 0) {
+                        output = {
+                            branchName: "Blok IF (Baris 2)",
+                            title: "TIDAK LULUS (Kehadiran Kurang)",
+                            subtitle: `Kehadiran hanya ${hadir}%. Minimal kehadiran adalah 75% meskipun nilai ujian ${nilai}.`,
+                            icon: "fa-user-xmark",
+                            theme: "rose",
+                            explanation: `Program memeriksa kondisi pertama <code>if (hadir < 75)</code>. Karena <strong>${hadir} < 75</strong> bernilai <strong>TRUE</strong>, program langsung mengeksekusi blok ini dan <strong>mengabaikan</strong> seluruh pemeriksaan nilai di bawahnya (<em>short-circuit</em>).`
+                        };
+                    } else if (winningIndex === 1) {
+                        output = {
+                            branchName: "Blok ELSE IF #1 (Baris 4)",
+                            title: "LULUS — Predikat A (Sangat Baik)",
+                            subtitle: `Nilai ${nilai} dan kehadiran ${hadir}% memenuhi kriteria tertinggi.`,
+                            icon: "fa-award",
+                            theme: "emerald",
+                            explanation: `Kondisi pertama <code>hadir < 75</code> bernilai <strong>FALSE</strong> (${hadir} >= 75), sehingga lanjut ke kondisi kedua <code>else if (nilai >= 85)</code>. Karena <strong>${nilai} >= 85</strong> bernilai <strong>TRUE</strong>, cabang Predikat A dipilih dan cabang di bawahnya dilewati.`
+                        };
+                    } else if (winningIndex === 2) {
+                        output = {
+                            branchName: "Blok ELSE IF #2 (Baris 6)",
+                            title: "LULUS — Predikat B (Baik)",
+                            subtitle: `Nilai ${nilai} berada di rentang 70–84 dengan kehadiran ${hadir}%.`,
+                            icon: "fa-circle-check",
+                            theme: "sky",
+                            explanation: `Dua kondisi awal (<code>hadir < 75</code> dan <code>nilai >= 85</code>) bernilai <strong>FALSE</strong>. Program kemudian mengecek <code>else if (nilai >= 70)</code>. Karena <strong>${nilai} >= 70</strong> bernilai <strong>TRUE</strong>, blok Predikat B dieksekusi.`
+                        };
+                    } else {
+                        output = {
+                            branchName: "Blok ELSE (Baris 8)",
+                            title: "BELUM LULUS — Wajib Remedial",
+                            subtitle: `Kehadiran cukup (${hadir}%), namun nilai ${nilai} masih di bawah standar kelulusan (70).`,
+                            icon: "fa-book-open-reader",
+                            theme: "amber",
+                            explanation: `Semua kondisi <code>if</code> dan <code>else if</code> di atas bernilai <strong>FALSE</strong> (kehadiran cukup, namun nilai ${nilai} tidak >= 85 maupun >= 70). Oleh karena itu, program otomatis masuk ke blok penutup <code>else</code>.`
+                        };
+                    }
+
+                    // Representasi Baris Kode untuk Display
+                    const codeLines = [
+                        { line: 1, text: `<span class="text-purple-400">let</span> nilai = <span class="text-amber-300">${nilai}</span>, hadir = <span class="text-amber-300">${hadir}</span>;`, type: "neutral" },
+                        { line: 2, text: `<span class="text-pink-400 font-bold">if</span> (hadir < <span class="text-amber-300">75</span>) {`, type: "cond", condIdx: 0 },
+                        { line: 3, text: `    <span class="text-sky-300">hasil</span> = <span class="text-emerald-300">"TIDAK LULUS (Kehadiran Kurang)"</span>;`, type: "body", condIdx: 0 },
+                        { line: 4, text: `} <span class="text-pink-400 font-bold">else if</span> (nilai >= <span class="text-amber-300">85</span>) {`, type: "cond", condIdx: 1 },
+                        { line: 5, text: `    <span class="text-sky-300">hasil</span> = <span class="text-emerald-300">"LULUS - Predikat A"</span>;`, type: "body", condIdx: 1 },
+                        { line: 6, text: `} <span class="text-pink-400 font-bold">else if</span> (nilai >= <span class="text-amber-300">70</span>) {`, type: "cond", condIdx: 2 },
+                        { line: 7, text: `    <span class="text-sky-300">hasil</span> = <span class="text-emerald-300">"LULUS - Predikat B"</span>;`, type: "body", condIdx: 2 },
+                        { line: 8, text: `} <span class="text-pink-400 font-bold">else</span> {`, type: "cond", condIdx: 3 },
+                        { line: 9, text: `    <span class="text-sky-300">hasil</span> = <span class="text-emerald-300">"BELUM LULUS - Remedial"</span>;`, type: "body", condIdx: 3 },
+                        { line: 10, text: `}`, type: "neutral" }
+                    ];
+
+                    return { conditions, winningIndex, output, codeLines };
+                }
+            },
+            {
+                id: 1,
+                title: "Sensor Suhu Ruangan AC",
+                tag: "Struktur: IF - ELSE IF - ELSE",
+                filename: "sensor_ac_otomatis.js",
+                inputs: [
+                    { id: "suhu", label: "Suhu Ruangan Saat Ini (°C)", type: "range", min: 15, max: 40, step: 1, default: 29, unit: "°C" }
+                ],
+                presets: [
+                    { label: "Sangat Panas (34°C)", values: { suhu: 34 } },
+                    { label: "Hangat (27°C)", values: { suhu: 27 } },
+                    { label: "Sejuk Ideal (22°C)", values: { suhu: 22 } },
+                    { label: "Terlalu Dingin (17°C)", values: { suhu: 17 } }
+                ],
+                evaluate: function(vals) {
+                    const { suhu } = vals;
+
+                    const conditions = [
+                        {
+                            id: "cond-0",
+                            type: "IF",
+                            expression: `suhu >= 30`,
+                            evaluatedExpr: `${suhu} >= 30`,
+                            result: suhu >= 30,
+                            desc: "Cek apakah ruangan sangat panas (>= 30°C)"
+                        },
+                        {
+                            id: "cond-1",
+                            type: "ELSE IF",
+                            expression: `suhu >= 25`,
+                            evaluatedExpr: `${suhu} >= 25`,
+                            result: suhu >= 25,
+                            desc: "Cek apakah ruangan terasa hangat (25°C - 29°C)"
+                        },
+                        {
+                            id: "cond-2",
+                            type: "ELSE IF",
+                            expression: `suhu >= 20`,
+                            evaluatedExpr: `${suhu} >= 20`,
+                            result: suhu >= 20,
+                            desc: "Cek apakah ruangan sudah sejuk ideal (20°C - 24°C)"
+                        },
+                        {
+                            id: "cond-3",
+                            type: "ELSE",
+                            expression: `Suhu < 20°C`,
+                            evaluatedExpr: `${suhu} < 20`,
+                            result: true,
+                            desc: "Jika suhu di bawah 20°C, matikan kompresor AC"
+                        }
+                    ];
+
+                    let winningIndex = conditions.findIndex(c => c.result);
+                    let output = {};
+
+                    if (winningIndex === 0) {
+                        output = {
+                            branchName: "Blok IF (Baris 2)",
+                            title: "MODE TURBO COOL (16°C) — Kipas Maksimal",
+                            subtitle: `Suhu ruangan ${suhu}°C terdeteksi panas. Kompresor bekerja penuh.`,
+                            icon: "fa-snowflake",
+                            theme: "rose",
+                            explanation: `Sensor membaca suhu <strong>${suhu}°C</strong>. Kondisi pertama <code>if (suhu >= 30)</code> langsung bernilai <strong>TRUE</strong>, sehingga AC mengaktifkan mode pendinginan maksimal.`
+                        };
+                    } else if (winningIndex === 1) {
+                        output = {
+                            branchName: "Blok ELSE IF #1 (Baris 4)",
+                            title: "MODE NORMAL COOL (22°C) — Kipas Sedang",
+                            subtitle: `Suhu ruangan ${suhu}°C agak hangat. AC mendinginkan secara bertahap.`,
+                            icon: "fa-wind",
+                            theme: "amber",
+                            explanation: `Kondisi <code>suhu >= 30</code> bernilai <strong>FALSE</strong>. Program mengecek kondisi berikutnya <code>else if (suhu >= 25)</code> dan mendapatkan hasil <strong>TRUE</strong> (${suhu} >= 25).`
+                        };
+                    } else if (winningIndex === 2) {
+                        output = {
+                            branchName: "Blok ELSE IF #2 (Baris 6)",
+                            title: "MODE ECO / HEMAT ENERGI (24°C)",
+                            subtitle: `Suhu ruangan ${suhu}°C sudah nyaman. AC menjaga kestabilan suhu.`,
+                            icon: "fa-leaf",
+                            theme: "emerald",
+                            explanation: `Kondisi <code>>= 30</code> dan <code>>= 25</code> keduanya <strong>FALSE</strong>. Saat mengecek <code>else if (suhu >= 20)</code>, hasilnya <strong>TRUE</strong> sehingga mode hemat daya aktif.`
+                        };
+                    } else {
+                        output = {
+                            branchName: "Blok ELSE (Baris 8)",
+                            title: "AC STANDBY / KOMPRESOR MATI",
+                            subtitle: `Suhu ruangan ${suhu}°C sudah terlalu dingin (< 20°C).`,
+                            icon: "fa-power-off",
+                            theme: "sky",
+                            explanation: `Semua kondisi suhu panas/hangat/sejuk di atas bernilai <strong>FALSE</strong> karena suhu (${suhu}°C) kurang dari 20°C. Blok <code>else</code> otomatis dijalankan untuk mematikan pendingin.`
+                        };
+                    }
+
+                    const codeLines = [
+                        { line: 1, text: `<span class="text-purple-400">let</span> suhu = <span class="text-amber-300">${suhu}</span>; <span class="text-slate-500">// dalam Celcius</span>`, type: "neutral" },
+                        { line: 2, text: `<span class="text-pink-400 font-bold">if</span> (suhu >= <span class="text-amber-300">30</span>) {`, type: "cond", condIdx: 0 },
+                        { line: 3, text: `    <span class="text-sky-300">modeAC</span> = <span class="text-emerald-300">"TURBO COOL (Kipas Max)"</span>;`, type: "body", condIdx: 0 },
+                        { line: 4, text: `} <span class="text-pink-400 font-bold">else if</span> (suhu >= <span class="text-amber-300">25</span>) {`, type: "cond", condIdx: 1 },
+                        { line: 5, text: `    <span class="text-sky-300">modeAC</span> = <span class="text-emerald-300">"NORMAL COOL (Kipas Sedang)"</span>;`, type: "body", condIdx: 1 },
+                        { line: 6, text: `} <span class="text-pink-400 font-bold">else if</span> (suhu >= <span class="text-amber-300">20</span>) {`, type: "cond", condIdx: 2 },
+                        { line: 7, text: `    <span class="text-sky-300">modeAC</span> = <span class="text-emerald-300">"MODE ECO (Hemat Energi)"</span>;`, type: "body", condIdx: 2 },
+                        { line: 8, text: `} <span class="text-pink-400 font-bold">else</span> {`, type: "cond", condIdx: 3 },
+                        { line: 9, text: `    <span class="text-sky-300">modeAC</span> = <span class="text-emerald-300">"STANDBY (Kompresor Mati)"</span>;`, type: "body", condIdx: 3 },
+                        { line: 10, text: `}`, type: "neutral" }
+                    ];
+
+                    return { conditions, winningIndex, output, codeLines };
+                }
+            },
+            {
+                id: 2,
+                title: "Diskon Belanja & Member VIP",
+                tag: "Operator Logika AND (&&) & Bertingkat",
+                filename: "kasir_diskon_vip.js",
+                inputs: [
+                    { id: "total", label: "Total Belanja (Ribu Rp)", type: "range", min: 50, max: 1000, step: 50, default: 600, unit: ".000" },
+                    { id: "isVIP", label: "Status Keanggotaan", type: "toggle", default: true, trueLabel: "Member VIP (true)", falseLabel: "Reguler (false)" }
+                ],
+                presets: [
+                    { label: "VIP Belanja Besar (600rb, VIP)", values: { total: 600, isVIP: true } },
+                    { label: "Non-VIP Belanja Besar (600rb, Reguler)", values: { total: 600, isVIP: false } },
+                    { label: "VIP Belanja Kecil (200rb, VIP)", values: { total: 200, isVIP: true } },
+                    { label: "Belanja Hemat (100rb, Reguler)", values: { total: 100, isVIP: false } }
+                ],
+                evaluate: function(vals) {
+                    const { total, isVIP } = vals;
+                    const c0 = (total >= 500 && isVIP === true);
+                    const c1 = (total >= 500);
+                    const c2 = (total >= 250 || isVIP === true);
+
+                    const conditions = [
+                        {
+                            id: "cond-0",
+                            type: "IF",
+                            expression: `total >= 500 && isVIP == true`,
+                            evaluatedExpr: `(${total} >= 500) && (${isVIP})`,
+                            result: c0,
+                            desc: "Operator AND (&&): Keduanya harus TRUE untuk Diskon 30%"
+                        },
+                        {
+                            id: "cond-1",
+                            type: "ELSE IF",
+                            expression: `total >= 500`,
+                            evaluatedExpr: `${total} >= 500`,
+                            result: c1,
+                            desc: "Belanja >= 500rb tanpa status VIP mendapat Diskon 15%"
+                        },
+                        {
+                            id: "cond-2",
+                            type: "ELSE IF",
+                            expression: `total >= 250 || isVIP == true`,
+                            evaluatedExpr: `(${total} >= 250) || (${isVIP})`,
+                            result: c2,
+                            desc: "Operator OR (||): Salah satu TRUE mendapat Diskon 10%"
+                        },
+                        {
+                            id: "cond-3",
+                            type: "ELSE",
+                            expression: `Tidak memenuhi syarat promo`,
+                            evaluatedExpr: `total (${total}rb) < 250 & bukan VIP`,
+                            result: true,
+                            desc: "Harga normal tanpa potongan diskon"
+                        }
+                    ];
+
+                    let winningIndex = conditions.findIndex(c => c.result);
+                    let output = {};
+
+                    if (winningIndex === 0) {
+                        const bayar = total * 0.7;
+                        output = {
+                            branchName: "Blok IF (Baris 2)",
+                            title: `DISKON SPESIAL 30% — Bayar Rp ${bayar}.000`,
+                            subtitle: `Hemat Rp ${total - bayar}.000! Syarat belanja >= 500rb DAN Member VIP terpenuhi.`,
+                            icon: "fa-crown",
+                            theme: "emerald",
+                            explanation: `Operator logika <code>&&</code> (AND) mengharuskan <strong>kedua sisi</strong> bernilai TRUE. Karena <code>total >= 500</code> (${total >= 500}) <strong>DAN</strong> <code>isVIP == true</code> (${isVIP}) keduanya benar, diskon tertinggi 30% diberikan.`
+                        };
+                    } else if (winningIndex === 1) {
+                        const bayar = total * 0.85;
+                        output = {
+                            branchName: "Blok ELSE IF #1 (Baris 4)",
+                            title: `DISKON REGULER 15% — Bayar Rp ${bayar}.000`,
+                            subtitle: `Belanja Rp ${total}.000 memenuhi syarat, namun status bukan Member VIP.`,
+                            icon: "fa-tags",
+                            theme: "sky",
+                            explanation: `Kondisi pertama gagal (<strong>FALSE</strong>) karena status <code>isVIP</code> adalah <code>false</code> (syarat AND tidak terpenuhi). Program turun ke <code>else if (total >= 500)</code> yang bernilai <strong>TRUE</strong>.`
+                        };
+                    } else if (winningIndex === 2) {
+                        const bayar = total * 0.9;
+                        output = {
+                            branchName: "Blok ELSE IF #2 (Baris 6)",
+                            title: `DISKON HEMAT 10% — Bayar Rp ${bayar}.000`,
+                            subtitle: `Salah satu syarat terpenuhi (Belanja >= 250rb ATAU Member VIP).`,
+                            icon: "fa-percent",
+                            theme: "amber",
+                            explanation: `Operator logika <code>||</code> (OR) bernilai <strong>TRUE</strong> jika minimal <strong>salah satu</strong> kondisi benar. Di sini <code>total >= 250</code> adalah <strong>${total >= 250}</strong> dan <code>isVIP</code> adalah <strong>${isVIP}</strong>.`
+                        };
+                    } else {
+                        output = {
+                            branchName: "Blok ELSE (Baris 8)",
+                            title: `HARGA NORMAL (0% Diskon) — Bayar Rp ${total}.000`,
+                            subtitle: `Belanja di bawah Rp 250.000 dan bukan Member VIP.`,
+                            icon: "fa-receipt",
+                            theme: "rose",
+                            explanation: `Semua ekspresi logika di atas bernilai <strong>FALSE</strong>. Program mengeksekusi blok <code>else</code> sehingga pelanggan membayar harga normal.`
+                        };
+                    }
+
+                    const codeLines = [
+                        { line: 1, text: `<span class="text-purple-400">let</span> total = <span class="text-amber-300">${total}</span>, isVIP = <span class="text-sky-400">${isVIP}</span>;`, type: "neutral" },
+                        { line: 2, text: `<span class="text-pink-400 font-bold">if</span> (total >= <span class="text-amber-300">500</span> && isVIP == <span class="text-sky-400">true</span>) {`, type: "cond", condIdx: 0 },
+                        { line: 3, text: `    <span class="text-sky-300">diskon</span> = <span class="text-emerald-300">"30% (VIP Big Spender)"</span>;`, type: "body", condIdx: 0 },
+                        { line: 4, text: `} <span class="text-pink-400 font-bold">else if</span> (total >= <span class="text-amber-300">500</span>) {`, type: "cond", condIdx: 1 },
+                        { line: 5, text: `    <span class="text-sky-300">diskon</span> = <span class="text-emerald-300">"15% (Reguler Big Spender)"</span>;`, type: "body", condIdx: 1 },
+                        { line: 6, text: `} <span class="text-pink-400 font-bold">else if</span> (total >= <span class="text-amber-300">250</span> || isVIP == <span class="text-sky-400">true</span>) {`, type: "cond", condIdx: 2 },
+                        { line: 7, text: `    <span class="text-sky-300">diskon</span> = <span class="text-emerald-300">"10% (Promo Member/Min 250rb)"</span>;`, type: "body", condIdx: 2 },
+                        { line: 8, text: `} <span class="text-pink-400 font-bold">else</span> {`, type: "cond", condIdx: 3 },
+                        { line: 9, text: `    <span class="text-sky-300">diskon</span> = <span class="text-emerald-300">"0% (Harga Normal)"</span>;`, type: "body", condIdx: 3 },
+                        { line: 10, text: `}`, type: "neutral" }
+                    ];
+
+                    return { conditions, winningIndex, output, codeLines };
+                }
+            }
+        ];
+
+        // ==========================================
+        // 2. STATE APLIKASI SIMULASI
+        // ==========================================
+        let currentScenarioIdx = 0;
+        let currentValues = {};
+        let isAnimating = false;
+        let stepTimers = [];
+
+        function clearAllTimers() {
+            stepTimers.forEach(t => clearTimeout(t));
+            stepTimers = [];
+            isAnimating = false;
+            document.getElementById('step-status-text').classList.add('hidden');
+            const btn = document.getElementById('btn-step-run');
+            btn.disabled = false;
+            btn.classList.remove('opacity-60', 'cursor-not-allowed');
+        }
+
+        // Pilih Skenario
+        function selectScenario(idx) {
+            clearAllTimers();
+            currentScenarioIdx = idx;
+            const scen = scenarios[idx];
+
+            // Update UI Kartu Skenario Aktif
+            document.querySelectorAll('.scenario-card').forEach((el, i) => {
+                if (i === idx) {
+                    el.classList.remove('border-slate-200', 'bg-white');
+                    el.classList.add('border-brand-600', 'bg-brand-50/60');
+                } else {
+                    el.classList.add('border-slate-200', 'bg-white');
+                    el.classList.remove('border-brand-600', 'bg-brand-50/60');
+                }
+            });
+
+            document.getElementById('scenario-tag').textContent = scen.tag;
+            document.getElementById('code-filename').textContent = scen.filename;
+
+            // Set Default Values
+            currentValues = {};
+            scen.inputs.forEach(inp => {
+                currentValues[inp.id] = inp.default;
+            });
+
+            renderInputs();
+            evaluateScenario(false);
+        }
+
+        function resetInputs() {
+            clearAllTimers();
+            const scen = scenarios[currentScenarioIdx];
+            scen.inputs.forEach(inp => {
+                currentValues[inp.id] = inp.default;
+            });
+            renderInputs();
+            evaluateScenario(false);
+        }
+
+        function applyPreset(presetObj) {
+            clearAllTimers();
+            currentValues = { ...presetObj };
+            renderInputs();
+            evaluateScenario(false);
+        }
+
+        // Render Form Input Dinamis
+        function renderInputs() {
+            const scen = scenarios[currentScenarioIdx];
+            const container = document.getElementById('dynamic-inputs');
+            let html = '';
+
+            // Preset Cepat
+            if (scen.presets && scen.presets.length > 0) {
+                html += `
+                <div>
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">Contoh Kasus Cepat (Preset):</label>
+                    <div class="flex flex-wrap gap-1.5">
+                        ${scen.presets.map((p, pIdx) => `
+                            <button onclick='applyPreset(${JSON.stringify(p.values)})' class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-brand-100 hover:text-brand-700 text-slate-700 font-medium transition-colors border border-slate-200/80">
+                                ${p.label}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>`;
+            }
+
+            // Input Controls
+            scen.inputs.forEach(inp => {
+                const val = currentValues[inp.id];
+                if (inp.type === 'range') {
+                    html += `
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70">
+                        <div class="flex justify-between items-center mb-2">
+                            <label for="inp-${inp.id}" class="text-sm font-semibold text-slate-700">${inp.label}</label>
+                            <span id="val-badge-${inp.id}" class="px-2.5 py-0.5 rounded-lg bg-brand-600 text-white font-mono font-bold text-sm shadow-sm">
+                                ${val}${inp.unit}
+                            </span>
+                        </div>
+                        <input type="range" id="inp-${inp.id}" min="${inp.min}" max="${inp.max}" step="${inp.step}" value="${val}"
+                            oninput="handleInputChange('${inp.id}', Number(this.value), '${inp.unit}')"
+                            class="w-full">
+                        <div class="flex justify-between text-[11px] text-slate-400 font-mono mt-1">
+                            <span>${inp.min}${inp.unit}</span>
+                            <span>${Math.round((inp.min + inp.max)/2)}${inp.unit}</span>
+                            <span>${inp.max}${inp.unit}</span>
+                        </div>
+                    </div>`;
+                } else if (inp.type === 'toggle') {
+                    html += `
+                    <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70">
+                        <label class="block text-sm font-semibold text-slate-700 mb-2.5">${inp.label}</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="handleToggleChange('${inp.id}', true)"
+                                class="py-2 px-3 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${val === true ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                                <i class="fa-solid fa-circle-check"></i> ${inp.trueLabel}
+                            </button>
+                            <button type="button" onclick="handleToggleChange('${inp.id}', false)"
+                                class="py-2 px-3 rounded-lg text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${val === false ? 'bg-rose-600 text-white border-rose-600 shadow-sm' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'}">
+                                <i class="fa-solid fa-circle-xmark"></i> ${inp.falseLabel}
+                            </button>
+                        </div>
+                    </div>`;
+                }
+            });
+
+            container.innerHTML = html;
+        }
+
+        function handleInputChange(id, newValue, unit) {
+            clearAllTimers();
+            currentValues[id] = newValue;
+            const badge = document.getElementById(`val-badge-${id}`);
+            if (badge) badge.textContent = `${newValue}${unit}`;
+            evaluateScenario(false);
+        }
+
+        function handleToggleChange(id, boolVal) {
+            clearAllTimers();
+            currentValues[id] = boolVal;
+            renderInputs();
+            evaluateScenario(false);
+        }
+
+        // ==========================================
+        // 3. EVALUASI & RENDER VISUALISASI (INSTAN & STEP-BY-STEP)
+        // ==========================================
+        function evaluateScenario(stepMode = false) {
+            const scen = scenarios[currentScenarioIdx];
+            const evalData = scen.evaluate(currentValues);
+
+            // 1. Update Memory Watch Bar
+            const memWatch = document.getElementById('memory-watch');
+            const memBadges = Object.entries(currentValues).map(([k, v]) => {
+                const displayVal = typeof v === 'boolean' ? `<span class="text-sky-300">${v}</span>` : `<span class="text-amber-300">${v}</span>`;
+                return `<span class="bg-slate-900 px-2 py-0.5 rounded border border-slate-700 text-slate-200">${k} = ${displayVal}</span>`;
+            }).join('');
+            memWatch.innerHTML = `<span class="text-slate-400"><i class="fa-solid fa-microchip mr-1"></i>Variabel Saat Ini:</span> ${memBadges}`;
+
+            if (!stepMode) {
+                renderCodeAndFlow(evalData, evalData.conditions.length);
+                renderOutputPanel(evalData.output);
+            }
+        }
+
+        // Jalankan Animasi Step-by-Step
+        function runStepByStep() {
+            clearAllTimers();
+            isAnimating = true;
+            const scen = scenarios[currentScenarioIdx];
+            const evalData = scen.evaluate(currentValues);
+
+            const btn = document.getElementById('btn-step-run');
+            const statusText = document.getElementById('step-status-text');
+            btn.disabled = true;
+            btn.classList.add('opacity-60', 'cursor-not-allowed');
+            statusText.classList.remove('hidden');
+
+            // Jumlah langkah sampai menemukan winningIndex
+            const stepsToRun = evalData.winningIndex + 1;
+
+            for (let step = 0; step < stepsToRun; step++) {
+                const timer = setTimeout(() => {
+                    // Sorot langkah yang sedang diperiksa
+                    renderCodeAndFlow(evalData, step, true);
+                    
+                    // Jika sudah sampai pada cabang yang menang, tampilkan hasil akhir
+                    if (step === stepsToRun - 1) {
+                        const finishTimer = setTimeout(() => {
+                            renderCodeAndFlow(evalData, stepsToRun, false);
+                            renderOutputPanel(evalData.output);
+                            clearAllTimers();
+                        }, 650);
+                        stepTimers.push(finishTimer);
+                    }
+                }, step * 850);
+                stepTimers.push(timer);
+            }
+        }
+
+        // Render Blok Kode & Flowchart sesuai progres evaluasi
+        function renderCodeAndFlow(evalData, evaluatedCount, isCurrentlyScanning = false) {
+            const { conditions, winningIndex, codeLines } = evalData;
+
+            // --- A. RENDER BLOK KODE ---
+            const codeContainer = document.getElementById('code-display');
+            codeContainer.innerHTML = codeLines.map(item => {
+                let rowClass = "code-line px-3 py-1 rounded-r flex items-center justify-between gap-2 ";
+                let badgeHtml = "";
+
+                if (item.type === "cond" || item.type === "body") {
+                    const cIdx = item.condIdx;
+                    const condObj = conditions[cIdx];
+
+                    if (isCurrentlyScanning && cIdx === evaluatedCount) {
+                        // Sedang diperiksa pada step ini
+                        rowClass += "evaluating";
+                        if (item.type === "cond") {
+                            badgeHtml = `<span class="text-[11px] font-sans font-bold px-2 py-0.5 rounded bg-amber-500 text-slate-950 animate-pulse">Memeriksa...</span>`;
+                        }
+                    } else if (cIdx < evaluatedCount) {
+                        // Sudah diperiksa
+                        if (cIdx === winningIndex) {
+                            rowClass += "active-true";
+                            if (item.type === "cond") {
+                                badgeHtml = `<span class="text-[11px] font-sans font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">TRUE ✓</span>`;
+                            }
+                        } else if (cIdx < winningIndex) {
+                            rowClass += "active-false";
+                            if (item.type === "cond") {
+                                badgeHtml = `<span class="text-[11px] font-sans font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/40">FALSE ✗</span>`;
+                            }
+                        } else {
+                            rowClass += "dimmed";
+                        }
+                    } else {
+                        // Belum diperiksa atau dilewati karena atas sudah TRUE
+                        rowClass += "dimmed";
+                        if (item.type === "cond" && evaluatedCount > winningIndex) {
+                            badgeHtml = `<span class="text-[10px] font-sans text-slate-500 italic">Dilewati</span>`;
+                        }
+                    }
+                }
+
+                return `
+                <div class="${rowClass}">
+                    <div class="flex items-center gap-3">
+                        <span class="text-slate-600 select-none w-5 text-right text-xs">${item.line}</span>
+                        <span class="whitespace-pre">${item.text}</span>
+                    </div>
+                    <div class="shrink-0">${badgeHtml}</div>
+                </div>`;
+            }).join('');
+
+            // --- B. RENDER FLOWCHART / KARTU EVALUASI ---
+            const flowContainer = document.getElementById('flowchart-container');
+            flowContainer.innerHTML = conditions.map((cond, idx) => {
+                let cardStyle = "border-slate-200 bg-slate-50 opacity-60";
+                let statusPill = `<span class="text-[11px] font-semibold px-2 py-0.5 rounded bg-slate-200 text-slate-600">Tidak Diperiksa</span>`;
+                let iconHtml = `<i class="fa-solid fa-minus text-slate-400"></i>`;
+
+                if (isCurrentlyScanning && idx === evaluatedCount) {
+                    cardStyle = "border-amber-400 bg-amber-50 ring-2 ring-amber-300/50 scale-[1.01]";
+                    statusPill = `<span class="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500 text-white">Mengecek...</span>`;
+                    iconHtml = `<i class="fa-solid fa-magnifying-glass text-amber-600"></i>`;
+                } else if (idx < evaluatedCount) {
+                    if (idx === winningIndex) {
+                        cardStyle = "border-emerald-500 bg-emerald-50/80 shadow-sm";
+                        statusPill = `<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-600 text-white">TRUE (Dipilih)</span>`;
+                        iconHtml = `<i class="fa-solid fa-check text-emerald-600"></i>`;
+                    } else if (idx < winningIndex) {
+                        cardStyle = "border-rose-200 bg-rose-50/50";
+                        statusPill = `<span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700 border border-rose-200">FALSE (Lanjut)</span>`;
+                        iconHtml = `<i class="fa-solid fa-xmark text-rose-500"></i>`;
+                    }
+                }
+
+                const arrowDown = idx < conditions.length - 1
+                    ? `<div class="flex justify-center -my-1 text-slate-300 text-xs"><i class="fa-solid fa-arrow-down"></i></div>`
+                    : '';
+
+                return `
+                <div class="p-3 rounded-xl border-2 transition-all duration-300 ${cardStyle}">
+                    <div class="flex items-center justify-between gap-2 mb-1">
+                        <div class="flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-xs shadow-2xs">
+                                ${iconHtml}
+                            </span>
+                            <span class="text-xs font-extrabold font-mono text-brand-700">${cond.type}</span>
+                            <code class="text-xs font-mono bg-white px-2 py-0.5 rounded border border-slate-200 text-slate-800">${cond.expression}</code>
+                        </div>
+                        ${statusPill}
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] text-slate-600 pl-8">
+                        <span>${cond.desc}</span>
+                        <span class="font-mono font-semibold text-slate-700 bg-white/80 px-1.5 py-0.5 rounded">Evaluasi: ${cond.evaluatedExpr}</span>
+                    </div>
+                </div>
+                ${arrowDown}`;
+            }).join('');
+        }
+
+        // Render Panel Output & Penjelasan
+        function renderOutputPanel(out) {
+            const themes = {
+                emerald: {
+                    card: "border-emerald-200 bg-emerald-50/70",
+                    iconBg: "bg-emerald-500",
+                    label: "text-emerald-700",
+                    badge: "bg-emerald-100 text-emerald-800"
+                },
+                sky: {
+                    card: "border-sky-200 bg-sky-50/70",
+                    iconBg: "bg-sky-500",
+                    label: "text-sky-700",
+                    badge: "bg-sky-100 text-sky-800"
+                },
+                amber: {
+                    card: "border-amber-200 bg-amber-50/70",
+                    iconBg: "bg-amber-500",
+                    label: "text-amber-700",
+                    badge: "bg-amber-100 text-amber-800"
+                },
+                rose: {
+                    card: "border-rose-200 bg-rose-50/70",
+                    iconBg: "bg-rose-500",
+                    label: "text-rose-700",
+                    badge: "bg-rose-100 text-rose-800"
+                }
+            };
+
+            const t = themes[out.theme] || themes.emerald;
+
+            const badgeEl = document.getElementById('executed-branch-badge');
+            badgeEl.className = `text-xs font-mono font-bold px-2.5 py-1 rounded-lg ${t.badge}`;
+            badgeEl.textContent = `Eksekusi: ${out.branchName}`;
+
+            const cardEl = document.getElementById('output-visual-card');
+            cardEl.className = `rounded-xl p-4 sm:p-5 border-2 flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4 transition-all ${t.card}`;
+
+            const iconEl = document.getElementById('output-icon');
+            iconEl.className = `w-14 h-14 rounded-2xl text-white flex items-center justify-center text-2xl shrink-0 shadow-sm ${t.iconBg}`;
+            iconEl.innerHTML = `<i class="fa-solid ${out.icon}"></i>`;
+
+            document.getElementById('output-result-text').textContent = out.title;
+            document.getElementById('output-sub-text').textContent = out.subtitle;
+            document.getElementById('logic-explanation').innerHTML = out.explanation;
+        }
+
+        // ==========================================
+        // 4. NAVIGASI TAB & MINI KUIS INTERAKTIF
+        // ==========================================
+        function switchMainTab(tabName) {
+            const simView = document.getElementById('view-simulasi');
+            const kuisView = document.getElementById('view-kuis');
+            const navSim = document.getElementById('nav-simulasi');
+            const navKuis = document.getElementById('nav-kuis');
+
+            if (tabName === 'simulasi') {
+                simView.classList.remove('hidden');
+                kuisView.classList.add('hidden');
+                navSim.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-900 shadow-sm";
+                navKuis.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-indigo-200 hover:text-white";
+            } else {
+                simView.classList.add('hidden');
+                kuisView.classList.remove('hidden');
+                navKuis.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all bg-white text-indigo-900 shadow-sm";
+                navSim.className = "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all text-indigo-200 hover:text-white";
+                renderQuiz();
+            }
+        }
+
+        // Data Soal Kuis
+        const quizQuestions = [
+            {
+                q: "Perhatikan potongan kode berikut. Output apa yang akan ditampilkan di layar?",
+                code: `let angka = 15;\nif (angka > 20) {\n    console.log("Besar");\n} else if (angka > 10) {\n    console.log("Sedang");\n} else {\n    console.log("Kecil");\n}`,
+                options: ["Besar", "Sedang", "Kecil", "Error"],
+                correct: 1,
+                explanation: "Kondisi pertama (15 > 20) bernilai FALSE. Komputer memeriksa kondisi kedua (15 > 10) yang bernilai TRUE, sehingga mencetak 'Sedang'."
+            },
+            {
+                q: "Jika variabel x = 80, mengapa blok 'else if (x >= 70)' TIDAK dijalankan pada kode di bawah ini?",
+                code: `let x = 80;\nif (x >= 75) {\n    status = "Lulus";\n} else if (x >= 70) {\n    status = "Cukup";\n}`,
+                options: [
+                    "Karena 80 lebih kecil dari 70",
+                    "Karena kondisi pertama (x >= 75) sudah TRUE, sehingga cabang berikutnya dilewati",
+                    "Karena tidak ada blok else di akhir",
+                    "Karena operator >= salah penulisan"
+                ],
+                correct: 1,
+                explanation: "Dalam struktur IF - ELSE IF, begitu ditemukan satu kondisi yang bernilai TRUE (80 >= 75), blok tersebut dieksekusi dan sisa percabangan di bawahnya langsung diabaikan."
+            },
+            {
+                q: "Lengkapilah bagian [ ??? ] agar pesan 'Boleh Masuk' muncul HANYA JIKA umur minimal 17 tahun DAN memiliki tiket:",
+                code: `let umur = 18;\nlet punyaTiket = true;\nif (umur >= 17 [ ??? ] punyaTiket == true) {\n    console.log("Boleh Masuk");\n}`,
+                options: ["|| (OR)", "&& (AND)", "! (NOT)", "== (Sama Dengan)"],
+                correct: 1,
+                explanation: "Operator logika && (AND) digunakan apabila KEDUA syarat harus terpenuhi secara bersamaan."
+            },
+            {
+                q: "Apa hasil akhir dari variabel 'warna' setelah kode berikut dijalankan?",
+                code: `let lampu = "KUNING";\nlet aksi = "";\nif (lampu == "MERAH") {\n    aksi = "Berhenti";\n} else if (lampu == "HIJAU") {\n    aksi = "Jalan";\n} else {\n    aksi = "Hati-hati";\n}`,
+                options: ["Berhenti", "Jalan", "Hati-hati", "Kosong (\"\")"],
+                correct: 2,
+                explanation: "Nilai lampu adalah 'KUNING', sehingga kondisi MERAH (FALSE) dan HIJAU (FALSE) tidak terpenuhi. Program otomatis menjalankan blok penutup else ('Hati-hati')."
+            },
+            {
+                q: "Manakah pernyataan yang BENAR mengenai blok 'else' dalam pemrograman?",
+                code: `if (kondisi1) {\n    // aksi 1\n} else {\n    // aksi 2\n}`,
+                options: [
+                    "Blok else wajib memiliki syarat kondisi di dalam kurung ()",
+                    "Blok else akan selalu dijalankan meskipun kondisi1 bernilai TRUE",
+                    "Blok else hanya dijalankan jika semua kondisi if/else if di atasnya bernilai FALSE",
+                    "Satu struktur if boleh memiliki lebih dari satu blok else"
+                ],
+                correct: 2,
+                explanation: "Blok else bertindak sebagai jalur cadangan terakhir (default) yang hanya dieksekusi ketika seluruh kondisi sebelumnya bernilai FALSE."
+            }
+        ];
+
+        let currentQuizIdx = 0;
+        let quizScore = 0;
+        let quizAnswered = false;
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            document.getElementById('quiz-score').textContent = `${quizScore} / ${quizQuestions.length}`;
+            const progress = ((currentQuizIdx + 1) / quizQuestions.length) * 100;
+            document.getElementById('quiz-progress-bar').style.width = `${progress}%`;
+
+            if (currentQuizIdx >= quizQuestions.length) {
+                // Layar Selesai Kuis
+                const percentage = Math.round((quizScore / quizQuestions.length) * 100);
+                container.innerHTML = `
+                <div class="text-center py-8 space-y-4">
+                    <div class="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-4xl mx-auto shadow-inner">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h3 class="text-2xl font-extrabold text-slate-900">Tantangan Selesai!</h3>
+                    <p class="text-slate-600 max-w-md mx-auto">
+                        Kamu berhasil menjawab benar <strong class="text-brand-600">${quizScore} dari ${quizQuestions.length}</strong> soal (${percentage}%).
+                    </p>
+                    <div class="pt-4 flex justify-center gap-3">
+                        <button onclick="restartQuiz()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm transition-all">
+                            <i class="fa-solid fa-rotate-right mr-1.5"></i> Ulangi Kuis
+                        </button>
+                        <button onclick="switchMainTab('simulasi')" class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition-all">
+                            Kembali ke Simulasi
+                        </button>
+                    </div>
+                </div>`;
+                return;
+            }
+
+            const qData = quizQuestions[currentQuizIdx];
+            quizAnswered = false;
+
+            container.innerHTML = `
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-bold uppercase tracking-wider text-brand-600 bg-brand-50 px-3 py-1 rounded-full">
+                        Soal ${currentQuizIdx + 1} dari ${quizQuestions.length}
+                    </span>
+                </div>
+                <h3 class="text-base sm:text-lg font-bold text-slate-800">${qData.q}</h3>
+                
+                <!-- Potongan Kode Soal -->
+                <pre class="bg-slate-900 text-slate-100 p-4 rounded-xl text-xs sm:text-sm code-font overflow-x-auto border border-slate-800 leading-relaxed">${qData.code}</pre>
+
+                <!-- Pilihan Jawaban -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2" id="quiz-options">
+                    ${qData.options.map((opt, idx) => `
+                        <button onclick="selectQuizOption(${idx})" id="q-opt-${idx}" class="text-left p-3.5 rounded-xl border-2 border-slate-200 hover:border-brand-500 hover:bg-brand-50/40 font-medium text-sm text-slate-700 transition-all flex items-center gap-3">
+                            <span class="w-7 h-7 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center shrink-0">
+                                ${String.fromCharCode(65 + idx)}
+                            </span>
+                            <span>${opt}</span>
+                        </button>
+                    `).join('')}
+                </div>
+
+                <!-- Umpan Balik Jawaban -->
+                <div id="quiz-feedback" class="hidden rounded-xl p-4 border text-sm"></div>
+
+                <!-- Tombol Lanjut -->
+                <div class="flex justify-end pt-2">
+                    <button id="btn-next-quiz" onclick="nextQuizQuestion()" class="hidden px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-sm shadow-sm transition-all flex items-center gap-2">
+                        <span>${currentQuizIdx === quizQuestions.length - 1 ? 'Lihat Hasil Akhir' : 'Soal Berikutnya'}</span>
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>`;
+        }
+
+        function selectQuizOption(selectedIdx) {
+            if (quizAnswered) return;
+            quizAnswered = true;
+
+            const qData = quizQuestions[currentQuizIdx];
+            const isCorrect = selectedIdx === qData.correct;
+            if (isCorrect) quizScore++;
+
+            document.getElementById('quiz-score').textContent = `${quizScore} / ${quizQuestions.length}`;
+
+            // Warnai tombol pilihan
+            qData.options.forEach((_, idx) => {
+                const btn = document.getElementById(`q-opt-${idx}`);
+                btn.disabled = true;
+                btn.classList.remove('hover:border-brand-500', 'hover:bg-brand-50/40');
+                if (idx === qData.correct) {
+                    btn.classList.remove('border-slate-200');
+                    btn.classList.add('border-emerald-500', 'bg-emerald-50', 'text-emerald-900', 'font-bold');
+                } else if (idx === selectedIdx && !isCorrect) {
+                    btn.classList.remove('border-slate-200');
+                    btn.classList.add('border-rose-500', 'bg-rose-50', 'text-rose-900');
+                } else {
+                    btn.classList.add('opacity-50');
+                }
+            });
+
+            // Tampilkan penjelasan
+            const fb = document.getElementById('quiz-feedback');
+            fb.classList.remove('hidden');
+            if (isCorrect) {
+                fb.className = "rounded-xl p-4 border border-emerald-200 bg-emerald-50 text-emerald-900 text-sm";
+                fb.innerHTML = `<div class="font-bold mb-1 flex items-center gap-1.5 text-emerald-700"><i class="fa-solid fa-circle-check"></i> Jawaban Benar!</div><p>${qData.explanation}</p>`;
+            } else {
+                fb.className = "rounded-xl p-4 border border-rose-200 bg-rose-50 text-rose-900 text-sm";
+                fb.innerHTML = `<div class="font-bold mb-1 flex items-center gap-1.5 text-rose-700"><i class="fa-solid fa-circle-xmark"></i> Kurang Tepat</div><p>${qData.explanation}</p>`;
+            }
+
+            document.getElementById('btn-next-quiz').classList.remove('hidden');
+        }
+
+        function nextQuizQuestion() {
+            currentQuizIdx++;
+            renderQuiz();
+        }
+
+        function restartQuiz() {
+            currentQuizIdx = 0;
+            quizScore = 0;
+            renderQuiz();
+        }
+
+        // Inisialisasi Aplikasi saat Halaman Dimuat
+        window.addEventListener('DOMContentLoaded', () => {
+            selectScenario(0);
+        });
+    </script>
+</body>
+</html>
